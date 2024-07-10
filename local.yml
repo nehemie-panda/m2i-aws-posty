@@ -1,0 +1,46 @@
+services:
+  web:
+    build:
+      context: ./web
+      dockerfile: ./docker/local.Dockerfile
+    volumes:
+      - ./web/src:/app
+      - /app/node_modules
+    ports:
+      - 3000:3000
+    env_file: ./environments/local.env
+    command: ["npm", "run", "devstart"]
+  
+  api:
+    build:
+      context: ./api
+      dockerfile: ./docker/Dockerfile
+    restart: always
+    depends_on:
+      - mongo
+    env_file: ./environments/local.env
+    ports:
+      - 3003:3000
+    volumes:
+      - ./api/src:/app
+      - /app/node_modules
+    command: ["npm", "run", "devstart"]
+  
+  mongo:
+    image: mongo:7.0.12
+    restart: always
+    env_file: ./environments/local.env
+    volumes:
+      - ./data/current:/data/db
+      - ./data/backups/:/data/backups
+    ports:
+      - 27017:27017
+
+  mongo-express:
+    image: mongo-express:1.0.2
+    restart: always
+    depends_on:
+      - mongo
+    ports:
+      - 3001:3000
+    env_file: ./environments/local.env

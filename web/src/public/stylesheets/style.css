@@ -1,0 +1,42 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+a {
+  text-decoration: none;
+}
+.card {
+  border: none;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: box-shadow 0.3s ease-in-out;
+}
+.card:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+  cursor: pointer;
+}
+.card-img-top {
+  height: 200px;
+  object-fit: cover;
+}
+.card-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+.card-text {
+  color: #6c757d;
+}
+.text-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.line-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;  
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: 4.5em; /* Fallback for non-webkit browsers. Adjust based on your font size and line height */
+}

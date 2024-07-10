@@ -1,0 +1,27 @@
+{
+  "name": "posty-api",
+  "version": "1.0.0",
+  "description": "API for posts from pets.StackExchange",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "devstart": "DEBUG=posty-web:* nodemon --legacy-watch index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Olfredos6/m2i-prf-aws.git"
+  },
+  "author": "Nehemie \"Alfred\" Balukidi",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Olfredos6/m2i-prf-aws/issues"
+  },
+  "homepage": "https://github.com/Olfredos6/m2i-prf-aws#readme",
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "mongodb": "^6.8.0"
+  }
+}

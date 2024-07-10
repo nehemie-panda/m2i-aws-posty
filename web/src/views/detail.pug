@@ -1,0 +1,43 @@
+extends layout
+
+block content
+  .container.py-5
+    .row.justify-content-center
+      .col-md-10
+        .d-flex.align-items-start.position-relative
+          .img-container.me-4.flex-shrink-0
+            img.img-fluid(src="/images/pets-images/" + post.Picture, alt="Post Image", style="object-fit: cover; width: 100%; height: auto;")
+          .flex-grow-1.ms-3
+            h2.mb-3= post.Title
+            p.mb-4!= post.Body
+            .d-flex.align-items-center
+              textarea.form-control.me-2(rows="3", placeholder="Add a comment...")
+              button.btn.btn-outline-light.px-4 comment
+        .vote-container.position-absolute.top-50.end-0.translate-middle-y.me-5.text-center
+          a.vote-button.mb-2(href="/_/" + post._id + "/upvote") ▲
+          .score.my-2= post.Score
+          a.vote-button.mt-2(href="/_/" + post._id + "/downvote") ▼
+          .mt-1 score
+
+block styles
+  style.
+    .img-container {
+      width: 200px; /* Adjust the width as needed */
+      height: 100%; /* Ensure it takes up the full height of its parent */
+    }
+    .vote-button {
+      cursor: pointer;
+      font-size: 24px;
+    }
+    .score {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .btn-outline-light {
+      border-color: #FFA500;
+      color: #FFA500;
+    }
+    .btn-outline-light:hover {
+      background-color: #FFA500;
+      color: #3E2723;
+    }
