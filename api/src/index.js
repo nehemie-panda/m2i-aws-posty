@@ -1,29 +1,30 @@
 const express = require('express');
-const { MongoClient, ObjectId } = require('mongodb');
+const mysql = require('mysql2/promise');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// MongoDB connection string (replace with your actual connection string)
-const uri = process.env.ME_CONFIG_MONGODB_URL;
-const client = new MongoClient(uri);
-const dbName = process.env.MONGO_dbName
-const collectionName = process.env.MONGO_DB_COLLECTION_NAME
+// MySQL connection configuration
+const dbConfig = {
+  host: process.env.MYSQL_HOST,
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE,
+};
 
-let db;
+let pool;
 
-// Connect to MongoDB
-async function connectToMongo() {
+// Connect to MySQL
+async function connectToMySQL() {
   try {
-    await client.connect();
-    db = client.db(dbName);
-    console.log("Connected to MongoDB");
+    pool = mysql.createPool(dbConfig);
+    console.log("Connected to MySQL");
   } catch (error) {
-    console.error("Could not connect to MongoDB", error);
+    console.error("Could not connect to MySQL", error);
     process.exit(1);
   }
 }
 
-connectToMongo();
+connectToMySQL();
 
 app.use(express.json());
 
@@ -31,16 +32,17 @@ app.use(express.json());
 app.get('/posts', async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 9;
-  const skip = (page - 1) * limit;
+  const offset = (page - 1) * limit;
 
   try {
-    const posts = await db.collection('posts').find({}).sort({ Picture: -1, OwnerDisplayName: -1 })
-      .skip(skip)
-      .limit(limit)
-      .toArray();
+    const [posts] = await pool.query(
+      "SELECT Id, Title, Picture, OwnerDisplayName, LastEditorDisplayName, DATE_FORMAT(CreationDate, '%W %d of %M %Y') AS CreationDate FROM posts ORDER BY CreationDate DESC LIMIT ? OFFSET ?",
+      [limit, offset]
+    );
+
     res.json({ "data": posts, "next": `/posts?page=${page + 1}`, "previous": page > 1 ? `/posts?page=${page - 1}` : null });
   } catch (error) {
-    res.status(500).json({ message: "Error fetching posts", error });
+    res.status(500).json({ message: "Error fetching posts", error: error.message });
   }
 });
 
@@ -51,80 +53,75 @@ app.get('/posts/search', async (req, res) => {
     return res.status(400).json({ message: "Keyword is required" });
   }
 
-
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 9;
-  const skip = (page - 1) * limit;
+  const offset = (page - 1) * limit;
 
   try {
-    const totalMatch = await db.collection('posts').countDocuments({ $text: { $search: keyword } });
-    const totalPages = Math.floor(totalMatch/limit);
-    const posts = await db.collection('posts').find(
-      { $text: { $search: keyword } },
-      {
-        score: { $meta: "textScore" },
-        projection: { _id: 1, Title: 1, Picture: 1, LastEditorDisplayName: 1, OwnerDisplayName: 1 },
-      },
-    )
-      .sort({ score: { $meta: "textScore" } })
-      .skip(skip)
-      .limit(limit)
-      .toArray();
+    const [totalMatchResult] = await pool.query(
+      "SELECT COUNT(*) as count FROM posts WHERE MATCH(Title, Body, Tags) AGAINST(? IN NATURAL LANGUAGE MODE)",
+      [keyword]
+    );
+    const totalMatch = totalMatchResult[0].count;
+    const totalPages = Math.ceil(totalMatch / limit);
+
+    const [posts] = await pool.query(
+      "SELECT Id, Title, Picture, OwnerDisplayName, LastEditorDisplayName, DATE_FORMAT(CreationDate, '%W %d of %M %Y'), " +
+      "MATCH(Title, Body, Tags) AGAINST(? IN NATURAL LANGUAGE MODE) as score " +
+      "FROM posts WHERE MATCH(Title, Body, Tags) AGAINST(? IN NATURAL LANGUAGE MODE) " +
+      "ORDER BY score DESC LIMIT ? OFFSET ?",
+      [keyword, keyword, limit, offset]
+    );
+
     res.json({
       totalMatch,
-      posts: posts,
+      posts,
       totalPages
     });
   } catch (error) {
-    res.status(500).json({ message: "Error searching posts", error });
+    res.status(500).json({ message: "Error searching posts", error: error.message });
   }
 });
 
 // Get one post
 app.get('/posts/:id', async (req, res) => {
   try {
-    const post = await db.collection('posts').findOne({ _id: new ObjectId(req.params.id) });
-    if (post) {
-      res.json(post);
+    const [posts] = await pool.query('SELECT * FROM posts WHERE id = ?', [req.params.id]);
+    if (posts.length > 0) {
+      res.json(posts[0]);
     } else {
       res.status(404).json({ message: "Post not found" });
     }
   } catch (error) {
-    res.status(500).json({ message: "Error fetching post", error });
+    res.status(500).json({ message: "Error fetching post", error: error.message });
   }
 });
 
 // Upvote a post
 app.post('/posts/:id/upvote', async (req, res) => {
   try {
-    const result = await db.collection('posts').updateOne(
-      { _id: new ObjectId(req.params.id) },
-      { $inc: { Score: 1 } }
-    );
-    if (result.modifiedCount === 1) {
-      res.redirect(`/posts/${req.params.id}/`)
+    const [result] = await pool.query('UPDATE posts SET Score = Score + 1 WHERE id = ?', [req.params.id]);
+    if (result.affectedRows === 1) {
+      res.redirect(`/posts/${req.params.id}/`);
     } else {
       res.status(404).json({ message: "Post not found" });
     }
   } catch (error) {
-    res.status(500).json({ message: "Error upvoting post", error });
+    res.status(500).json({ message: "Error upvoting post", error: error.message });
   }
 });
 
 // Downvote a post
 app.post('/posts/:id/downvote', async (req, res) => {
   try {
-    const result = await db.collection('posts').updateOne(
-      { _id: new ObjectId(req.params.id) },
-      { $inc: { Score: -1 } }
-    );
-    if (result.modifiedCount === 1) {
-      res.redirect(`/posts/${req.params.id}/`)
+    const [result] = await pool.query('UPDATE posts SET Score = Score - 1 WHERE id = ?', [req.params.id]);
+    if (result.affectedRows === 1) {
+      res.redirect(`/posts/${req.params.id}/`);
     } else {
       res.status(404).json({ message: "Post not found" });
     }
   } catch (error) {
-    res.status(500).json({ message: "Error downvoting post", error });
+    res.status(500).json({ message: "Error downvoting post", error: error.message });
   }
 });
 

@@ -14,9 +14,9 @@ block content
               textarea.form-control.me-2(rows="3", placeholder="Add a comment...")
               button.btn.btn-outline-light.px-4 comment
         .vote-container.position-absolute.top-50.end-0.translate-middle-y.me-5.text-center
-          a.vote-button.mb-2(href="/_/" + post._id + "/upvote") ▲
+          a.vote-button.mb-2(href="/_/" + post.Id + "/upvote") ▲
           .score.my-2= post.Score
-          a.vote-button.mt-2(href="/_/" + post._id + "/downvote") ▼
+          a.vote-button.mt-2(href="/_/" + post.Id + "/downvote") ▼
           .mt-1 score
 
 block styles

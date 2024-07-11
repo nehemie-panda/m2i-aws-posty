@@ -17,7 +17,7 @@ services:
       dockerfile: ./docker/Dockerfile
     restart: always
     depends_on:
-      - mongo
+      - mysql
     env_file: ./environments/local.env
     ports:
       - 3003:3000
@@ -26,21 +26,14 @@ services:
       - /app/node_modules
     command: ["npm", "run", "devstart"]
   
-  mongo:
-    image: mongo:7.0.12
-    restart: always
+  mysql:
+    image: mysql:9
+    ports:
+      - 3306:3306
     env_file: ./environments/local.env
     volumes:
-      - ./data/current:/data/db
-      - ./data/backups/:/data/backups
-    ports:
-      - 27017:27017
+      - ../import-data:/data
+      - ./mysql-data:/var/lib/mysql
+      - ./db_dump.sql:/docker-entrypoint-initdb.d
 
-  mongo-express:
-    image: mongo-express:1.0.2
-    restart: always
-    depends_on:
-      - mongo
-    ports:
-      - 3001:3000
-    env_file: ./environments/local.env
+

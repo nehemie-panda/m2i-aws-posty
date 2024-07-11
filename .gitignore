@@ -3,4 +3,5 @@
 **/package-lock.json
 **/.DS_Store
 data
+mysql-data
 **/pets-images
