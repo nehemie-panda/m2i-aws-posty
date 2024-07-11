@@ -6,4 +6,17 @@ services:
     ports:
       - 3000:3000
     env_file: ./environments/production.env
-    command: ["npm", "run", "start"]
+    command: ["node", "bin/www"]
+
+  api:
+    build:
+      context: ./api
+      dockerfile: ./docker/Dockerfile
+    restart: always
+    env_file: ./environments/production.env
+    ports:
+      - 3003:3000
+    volumes:
+      - ./api/src:/app
+      - /app/node_modules
+    command: ["node", "index"]

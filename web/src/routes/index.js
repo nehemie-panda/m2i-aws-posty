@@ -40,7 +40,6 @@ router.get("/search", function (req, res, next) {
   }
 
   const page = parseInt(req.query.page) || 1;
-  // res.send(keyword)
   postDataService.searchPost(keyword, page).then(searchResponse => {
     res.render("index", { 
       search: keyword,

@@ -7,15 +7,14 @@ block content
   h2.mb-3= search ? 'Search for "' + search + '"' : "Latest posts"
   .row.row-cols-1.row-cols-md-3.g-4.mb-4
     each post in posts
-      a.col(href="/_/" + post._id)
+      a.col(href="/_/" + post.Id)
         .card.shadow-sm
           img.card-img-top(src="/images/pets-images/" + post.Picture alt=post.Picture)
           .card-body
             h5.card-title.text-truncate= post.Title || "No title"
             - var author = post.OwnerDisplayName || post.LastEditorDisplayName || "Unknown user"
-            //- p.card-text.line-clamp!= post.Body
             .d-flex.align-items-center.mt-3
               img.rounded-circle.me-2(src="https://via.placeholder.com/40x40.png?text=" + author[0] width="40" height="40" alt="Author avatar")
               div
                 p.mb-0.fw-bold= author
-                p.text-muted.small.mb-0 Monday 26 of July 2022
+                p.text-muted.small.mb-0= post.CreationDate
